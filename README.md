@@ -16,7 +16,7 @@ the following project assumes you have on your machine:
 aurelien@linux:~$ /usr/bin/vim /etc/apache2/sites-available/restisthebest.conf
 
 <VirtualHost *:80>
-    ServerName restisthebest.com
+    ServerName www.restisthebest.com
     DocumentRoot "/var/www/rest-laravel/public"
     SetEnv APPLICATION_ENV development
 
@@ -53,8 +53,10 @@ aurelien@linux:~$ cd /var/www/rest-laravel
 aurelien@linux:~$ /usr/bin/php artisan migrate --database=sqlite
 ```
 
-Restart apache
+Enabling the project and restart apache
 ```
+aurelien@linux:~$ /usr/sbin/a2ensite restisthebest.conf 
+aurelien@linux:~$ /bin/chown www-data: /var/www/rest-laravel 
 aurelien@linux:~$ /usr/sbin/service apache2 restart
 ```
 
