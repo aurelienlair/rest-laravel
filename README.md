@@ -62,11 +62,11 @@ aurelien@linux:~$ /usr/sbin/service apache2 restart
 
 Now you are ready to try the set-up
 ```
-aurelien@linux:~$ curl -v "http://www.restisthebest.com/api/ping" \
+aurelien@linux:~$ /usr/bin/curl -v "http://www.restisthebest.com/api/ping" \
 -H "Accept: application/json"
 
 > GET /api/ping HTTP/1.1
-> User-Agent: curl/7.55.1
+> User-Agent: /usr/bin/curl/7.55.1
 > Host: www.restisthebest.com
 > Accept: application/json
 >
@@ -85,14 +85,14 @@ aurelien@linux:~$ curl -v "http://www.restisthebest.com/api/ping" \
 
 Let's create an actor
 ```
-curl -v "http://www.restisthebest.com/api/actors" \
+/usr/bin/curl -v "http://www.restisthebest.com/api/actors" \
 -X POST \
 -H "Accept: application/json" \
 -d "firstname=al&lastname=pacino&country=US"
 
 > POST /api/actors HTTP/1.1
 > Host: www.restisthebest.com
-> User-Agent: curl/7.55.1
+> User-Agent: /usr/bin/curl/7.55.1
 > Accept: application/json
 > Content-Length: 39
 > Content-Type: application/x-www-form-urlencoded
@@ -111,9 +111,12 @@ curl -v "http://www.restisthebest.com/api/actors" \
 
 Let's get this new created resource
 ```
+/usr/bin/curl -v "http://restisthebest.com/api/actors/69cf706d-23ed-4f20-acca-6e0d483b882b" \
+-H "Accept: application/json" 
+
 > GET /api/actors/69cf706d-23ed-4f20-acca-6e0d483b882b HTTP/1.1
 > Host: www.restisthebest.com
-> User-Agent: curl/7.55.1
+> User-Agent: /usr/bin/curl/7.55.1
 > Accept: application/json
 > 
 < HTTP/1.1 200 OK
@@ -130,7 +133,7 @@ Let's get this new created resource
 
 Let's get this new created resource
 ```
-curl -v "http://www.restisthebest.com/api/actors/69cf706d-23ed-4f20-acca-6e0d483b882b" \
+/usr/bin/curl -v "http://www.restisthebest.com/api/actors/69cf706d-23ed-4f20-acca-6e0d483b882b" \
 > -X PUT \
 > -H "Content-Type: application/x-www-form-urlencoded" \
 > -H "Accept: application/json" \
@@ -138,7 +141,7 @@ curl -v "http://www.restisthebest.com/api/actors/69cf706d-23ed-4f20-acca-6e0d483
 
 > PUT /api/actors/69cf706d-23ed-4f20-acca-6e0d483b882b HTTP/1.1
 > Host: www.restisthebest.com
-> User-Agent: curl/7.55.1
+> User-Agent: /usr/bin/curl/7.55.1
 > Accept: application/json
 > Content-Length: 47
 > Content-Type: application/x-www-form-urlencoded
