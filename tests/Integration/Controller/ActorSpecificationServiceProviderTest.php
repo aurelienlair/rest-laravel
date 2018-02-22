@@ -23,20 +23,19 @@ class ActorStorageRequestValidatorTest extends TestCase
     public function testActorSpecificationValidation()
     {
         $request = Request::create(
-            'http://restisthebest.com',
+            'http://www.restisthebest.com',
             'POST',
             [
                 'firstname' => 'Al', 
                 'country' => 'US', 
             ]
         );
-        $specification = Specification::from(
+        
+        Specification::from(
             $request,
             [
                 'lastname' => 'required',
             ]
-        );
-        
-        $specification->validate();
+        )->validate();
     }
 }

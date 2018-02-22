@@ -20,12 +20,6 @@ class SqliteActorRepository implements ActorRepository
         'last_name',
         'country',
     ];
-    private $entityToSqlColumns = [
-        'uuid' => 'uuid',
-        'firstname' => 'first_name',
-        'lastname' => 'last_name',
-        'country' => 'country',
-    ];
 
     public function __construct(ConnectionInterface $connection)
     {
@@ -55,7 +49,7 @@ EOT;
 
 	public function findBy(Criteria $criteria): ?iterable
 	{
-        $columns = implode(",", array_values($this->entityToSqlColumns));
+        $columns = implode(",", array_values($this->sqlColumnsName));
 $query = <<<EOT
 SELECT {$columns}
 FROM actors
@@ -80,10 +74,15 @@ EOT;
         );
 	}
 
-	public function add(Actor $actor)
+	public function add(Actor $actor): void 
 	{
-        $columns = $this->translateColumnsToSql(array_keys($actor->export()));
-        $columns = "'" . implode("','", $columns) . "'";
+        $columnMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
+        $translatedColumns = [];
+        foreach (array_keys($actor->export()) as $value) {
+            $translatedColumns[$columnMap[$value]] = null;
+        }
+
+        $columns = "'" . implode("','", array_keys($translatedColumns)) . "'";
         $values = "'" . implode("','", array_values($actor->export())) . "'";
 
 $query = <<<EOT
@@ -96,11 +95,12 @@ EOT;
         $this->connection->insert($query);
 	}
 
-	public function update(Actor $actor)
+	public function update(Actor $actor): void
 	{
         $where = 'uuid = "' . $actor->export()['uuid'] . '"';
         $values = []; 
-        foreach ($this->entityToSqlColumns as $entityColumnName => $sqlColumnName) {
+        $columnMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
+        foreach ($columnMap as $entityColumnName => $sqlColumnName) {
             $values[] = "$sqlColumnName= \"" . $actor->export()[$entityColumnName] . "\""; 
         }
         $values = implode(", ", array_values($values));
@@ -112,23 +112,17 @@ WHERE
 {$where};
 EOT;
 
-        $data = $this->connection->update($query);
-
+        $this->connection->update($query);
 	}
 
-	public function remove(Actor $actor)
+	public function remove(Actor $actor): void
 	{
-        // TODO
+        $where = 'uuid = "' . $actor->export()['uuid'] . '"';
+$query = <<<EOT
+DELETE FROM actors
+WHERE
+{$where};
+EOT;
+        $this->connection->delete($query);
 	}
-
-    private function translateColumnsToSql(array $columns)
-    {
-        $translatedColumns = [];
-
-        foreach ($columns as $value) {
-            $translatedColumns[$this->entityToSqlColumns[$value]] = null;
-        }
-
-        return array_keys($translatedColumns);
-    }
 }

@@ -14,18 +14,11 @@ class ActorApiTest extends TestCase
 
     public function testShouldCreatedANewActor()
     {
-        $response = $this->json(
-            'POST',
-            '/api/actors', 
-            [
-                'firstname' => 'Ewan',
-                'lastname' => 'McGregor',
-                'country' => 'GB'
-            ]
+        $response = $this->actorApiRequest('POST')->assertStatus(201);
+        $this->assertEquals(
+            'application/json',
+            $response->headers->get('Content-Type')
         );
-
-        $response->assertStatus(201);
-		$this->assertEquals('application/json', $response->headers->get('Content-Type'));
         $this->assertRegExp(
             '#http://localhost/api/actors/[a-f0-9]{8}\-[a-f0-9]{4}\-4[a-f0-9]{3}\-(8|9|a|b)[a-f0-9]{3}\-[a-f0-9]{12}#',
             $response->headers->get('Location')
@@ -34,35 +27,23 @@ class ActorApiTest extends TestCase
 
     public function testShouldGetNewActorResource()
     {
-        $response = $this->json(
+        $this->actorApiRequest('POST');
+        $response = $this->actorApiRequest(
             'POST',
-            '/api/actors', 
             [
                 'firstname' => 'Michael',
                 'lastname' => 'Douglas',
                 'country' => 'US'
             ]
         );
-        $this->json(
-            'POST',
-            '/api/actors', 
-            [
-                'firstname' => 'Kirk',
-                'lastname' => 'Douglas',
-                'country' => 'US'
-            ]
-        );
-
         $url = $response->headers->get('Location');
         $response->assertStatus(201);
-        preg_match('#[a-f0-9]{8}\-[a-f0-9]{4}\-4[a-f0-9]{3}\-(8|9|a|b)[a-f0-9]{3}\-[a-f0-9]{12}#', $url, $uuid);
-        $response = $this->json('GET', $url);
-        $response->assertStatus(200);
+        $response = $this->json('GET', $url)->assertStatus(200);
 		$this->assertEquals('application/json', $response->headers->get('Content-Type'));
         $this->assertEquals(
             json_encode(
                 [
-                    'uuid' => $uuid[0],
+                    'uuid' => $this->uuidFromUrl($url),
                     'firstname' => 'Michael',
                     'lastname' => 'Douglas',
                     'country' => 'US'
@@ -73,7 +54,7 @@ class ActorApiTest extends TestCase
         );
     }
 
-    public function testCantGetNewActorResourceWithAnInvalidUid()
+    public function testCantGetNewActorResourceWithAnInvalidUuid()
     {
         $url ='http://localhost/api/actors/WRONG_ID';
         $response = $this->json('GET', $url);
@@ -82,40 +63,17 @@ class ActorApiTest extends TestCase
 
     public function testShouldModifyAnExistingActor()
     {
-        $response = $this->json(
-            'POST',
-            '/api/actors', 
-            [
-                'firstname' => 'Michael',
-                'lastname' => 'Douglas',
-                'country' => 'FR'
-            ]
-        );
-
-        $response->assertStatus(201);
+        $response = $this->actorApiRequest('POST')->assertStatus(201);
         $url = $response->headers->get('Location');
-        preg_match('#[a-f0-9]{8}\-[a-f0-9]{4}\-4[a-f0-9]{3}\-(8|9|a|b)[a-f0-9]{3}\-[a-f0-9]{12}#', $url, $uuid);
-        $response = $this->json(
-            'PUT',
-            $url, 
-            [
-                'uuid' => $uuid[0],
-                'firstname' => 'Michael',
-                'lastname' => 'Douglas',
-                'country' => 'US'
-            ]
-        );
-        $response->assertStatus(200);
+        $actorNewData = [
+            'uuid' => $this->uuidFromUrl($url),
+            'firstname' => 'Ewan',
+            'lastname' => 'MacGregor',
+            'country' => 'US'
+        ];
+        $response = $this->actorApiRequest('PUT', $actorNewData, $url)->assertStatus(200);
         $this->assertEquals(
-            json_encode(
-                [
-                    'uuid' => $uuid[0],
-                    'firstname' => 'Michael',
-                    'lastname' => 'Douglas',
-                    'country' => 'US'
-                ],
-                true
-            ), 
+            json_encode($actorNewData, true), 
             $response->getContent()
         );
     }
@@ -124,34 +82,68 @@ class ActorApiTest extends TestCase
     {
         $wrongUuid = 'WRONG_ID';
         $url ='http://localhost/api/actors/' . $wrongUuid;
-        $response = $this->json(
-            'PUT', 
-            $url,
+        $this->actorApiRequest(
+            'PUT',
             [
                 'uuid' => $wrongUuid,
                 'firstname' => 'Michael',
                 'lastname' => 'Douglas',
                 'country' => 'US'
-            ]
-        );
-        $response->assertStatus(404);
+            ],
+            $url
+        )->assertStatus(404);
     }
 
     public function testCannotUpdateActorIfEntityDoesNotExist()
     {
         $unknownUuid = '00000000-0000-4000-a000-000000000000';
         $url ='http://localhost/api/actors/' . $unknownUuid;
-        $response = $this->json(
-            'PUT', 
-            $url,
+        $this->actorApiRequest(
+            'PUT',
             [
                 'uuid' => $unknownUuid,
                 'firstname' => 'Michael',
                 'lastname' => 'Douglas',
                 'country' => 'US'
-            ]
+            ],
+            $url
+        )->assertStatus(422);
+    }
+
+    public function testShouldRemoveAnExistingActor()
+    {
+        $response = $this->actorApiRequest('POST');
+        $url = $response->headers->get('Location');
+        $this->json('DELETE', $url)->assertStatus(202);
+    }
+
+    private function actorApiRequest($type, array $parameters=[], $url=null)
+    {
+        $data = array_merge(
+            [
+                'firstname' => 'Ewan',
+                'lastname' => 'McGregor',
+                'country' => 'GB'
+            ],
+            $parameters
         );
-        $response->assertStatus(422);
+
+        if (empty($url)) {
+            $url = '/api/actors';
+        }
+
+        return $this->json(
+            $type,
+            $url,
+            $data
+        );
+    }
+
+    private function uuidFromUrl($url)
+    {
+        preg_match('#[a-f0-9]{8}\-[a-f0-9]{4}\-4[a-f0-9]{3}\-(8|9|a|b)[a-f0-9]{3}\-[a-f0-9]{12}#', $url, $matches);
+
+        return $matches[0];
     }
 
     public function tearDown()

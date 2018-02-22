@@ -111,6 +111,16 @@ EOT;
         $this->assertEquals(3, $this->repository->findAll()->count());
     }
 
+    public function testRemoveAnExistingActorFromRepository()
+    {
+        $actor = $this->newActor();
+        $this->repository->add($actor);
+        $this->repository->remove($actor);
+        $criteria = SqlCriteria::from(['uuid' => $actor->export()['uuid']]);
+        $dataSet = $this->repository->findBy($criteria);
+        $this->assertEquals(0, $dataSet->count());
+    }
+
     public function tearDown()
     {
         Artisan::call('migrate:reset');

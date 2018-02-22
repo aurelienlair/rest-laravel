@@ -72,6 +72,7 @@ class ActorController extends BaseController
             $request->input('country'),
             $uuid
         );
+
         $this->repository->update($actor);
 
         $actor = $this->findActorFrom(
@@ -87,6 +88,26 @@ class ActorController extends BaseController
         return response()
             ->json($actor->export())
             ->setStatusCode(200)
+            ->header('Content-Type', 'application/json');
+	}
+
+    public function remove($uuid)
+    {
+        $actor = $this->findActorFrom(
+            SqlCriteria::from([
+                'uuid' => $uuid
+            ])
+        );
+
+        if (is_null($actor)) {
+            throw new UnprocessableActor(); 
+        }
+
+        $this->repository->remove($actor);
+
+        return response()
+            ->json()
+            ->setStatusCode(202)
             ->header('Content-Type', 'application/json');
 	}
 
