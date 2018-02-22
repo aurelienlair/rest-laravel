@@ -121,6 +121,20 @@ EOT;
         $this->assertEquals(0, $dataSet->count());
     }
 
+    public function testActorEntityDbCompatibility()
+    {
+         $this->assertTrue(
+             $this->repository->sqliteRepositoryIsCompatibleWith(
+                 new Actor(
+                     'Michael',
+                     'Douglas',
+                     'US',
+                     (new RamseyUuidGenerator(4))->toString()
+                )
+             )
+         );
+    }
+
     public function tearDown()
     {
         Artisan::call('migrate:reset');

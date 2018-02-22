@@ -9,16 +9,16 @@ class SqliteActorRepository implements ActorRepository
 {
     private $connection;
     private $entityColumnsName = [
-        'uuid',
+        'country',
         'firstname',
         'lastname',
-        'country',
+        'uuid',
     ];
     private $sqlColumnsName = [
-        'uuid',
+        'country',
         'first_name',
         'last_name',
-        'country',
+        'uuid',
     ];
 
     public function __construct(ConnectionInterface $connection)
@@ -76,10 +76,10 @@ EOT;
 
 	public function add(Actor $actor): void 
 	{
-        $columnMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
+        $columnsMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
         $translatedColumns = [];
         foreach (array_keys($actor->export()) as $value) {
-            $translatedColumns[$columnMap[$value]] = null;
+            $translatedColumns[$columnsMap[$value]] = null;
         }
 
         $columns = "'" . implode("','", array_keys($translatedColumns)) . "'";
@@ -99,8 +99,8 @@ EOT;
 	{
         $where = 'uuid = "' . $actor->export()['uuid'] . '"';
         $values = []; 
-        $columnMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
-        foreach ($columnMap as $entityColumnName => $sqlColumnName) {
+        $columnsMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
+        foreach ($columnsMap as $entityColumnName => $sqlColumnName) {
             $values[] = "$sqlColumnName= \"" . $actor->export()[$entityColumnName] . "\""; 
         }
         $values = implode(", ", array_values($values));
@@ -125,4 +125,16 @@ WHERE
 EOT;
         $this->connection->delete($query);
 	}
+
+    public function sqliteRepositoryIsCompatibleWith(Actor $actor)
+    {
+        $actorSqliteColumns = $this->connection->getSchemaBuilder()->getColumnListing('actors');
+        asort($actorSqliteColumns);
+        $actorEntityColums = array_keys($actor->export());
+        asort($actorEntityColums);
+        $actualMap = array_combine($actorEntityColums, $actorSqliteColumns);
+        $expectedColumnsMap = array_combine($this->entityColumnsName, $this->sqlColumnsName);
+
+        return $actualMap === $expectedColumnsMap;
+    }
 }
