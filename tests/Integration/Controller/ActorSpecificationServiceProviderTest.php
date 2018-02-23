@@ -6,7 +6,6 @@ use Tests\TestCase;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ActorController;
 use App\Providers\ActorSpecificationServiceProvider as Specification;
-use Mockery;
 
 class ActorStorageRequestValidatorTest extends TestCase
 {
